@@ -1,7 +1,7 @@
 wget https://storage.googleapis.com/magentadata/datasets/maestro/v1.0.0/maestro-v1.0.0-midi.zip
 unzip maestro-v1.0.0-midi.zip
 
-ource /usr/local/miniconda3/etc/profile.d/conda.sh
+source /usr/local/miniconda3/etc/profile.d/conda.sh
 conda activate py37
 
 python3 music_encoder.py --encode_official_maestro \  
