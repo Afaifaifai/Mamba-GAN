@@ -15,7 +15,7 @@ source /usr/local/miniconda3/etc/profile.d/conda.sh
 
 # 4. 建立／更新 py37 環境
 if ! conda env list | grep -q py37; then
-  conda create -y -n py37 python=3.7
+  conda create -y -n py37 python=3.7.12
 fi
 
 # 5. 安裝你指定的套件
