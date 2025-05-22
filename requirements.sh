@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set -e
+#set -e
 
 ###  TransformerXL
 ### /opt/conda/bin/python -m pip install --upgrade pip
