@@ -14,7 +14,7 @@
 #python3 -m pip install --user tensorboardX
 #python3 -m pip install --user note_seq
 
-pip install --upgrade pip==21.0
+#pip install --upgrade pip==21.0
 
 conda install pytorch==1.5.1 torchvision==0.6.1 cudatoolkit=9.2 -c pytorch
 pip install nltk
