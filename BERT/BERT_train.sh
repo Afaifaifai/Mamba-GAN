@@ -6,7 +6,7 @@ conda activate py37
 # 再執行你的程式
 python3 main.py \
     --overwrite_output_dir \
-    --output_dir=../../drive/MyDrive/temp \
+    --output_dir=/content/drive/MyDrive/temp \
     --train_dir=../data/maestro_magenta_s5_t3/train \
     --eval_dir=../data/maestro_magenta_s5_t3/valid \
     --test_dir=../data/maestro_magenta_s5_t3/test \
