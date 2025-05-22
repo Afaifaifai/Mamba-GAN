@@ -19,6 +19,7 @@ if ! conda env list | grep -q py37; then
 fi
 
 # 5. 安裝你指定的套件
+conda activate py37
 conda install pytorch==1.5.1 torchvision==0.6.1 cudatoolkit=9.2 -c pytorch
 pip install nltk
 pip install texttable
