@@ -19,4 +19,5 @@ python3 main.py \
     --do_train \
     --evaluate_during_training \
     --do_eval \
+    --per_gpu_train_batch_size=512 \
     --mlm
