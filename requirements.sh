@@ -14,7 +14,7 @@
 #python3 -m pip install --user tensorboardX
 #python3 -m pip install --user note_seq
 
-pip install --upgrade pip
+pip install --upgrade pip==24.0
 
 pip install torch==1.5.1+cu92 torchvision==0.6.1+cu92 \
   -f https://download.pytorch.org/whl/torch_stable.html
