@@ -19,15 +19,6 @@ if ! conda env list | grep -q py37; then
 fi
 
 # 5. 安裝你指定的套件
-conda activate py37
-conda install -y pytorch==1.5.1 torchvision==0.6.1 cudatoolkit=9.2 -c pytorch
-pip install nltk
-pip install texttable
-pip install yacs
-
-pip install transformers==2.5.1
-pip install tqdm==4.41.1
-pip install tensorboardX
-pip install note_seq
+bash requirements.sh
 
 echo "=== py37 環境準備完成 ==="
