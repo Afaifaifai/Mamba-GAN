@@ -14,15 +14,14 @@
 #python3 -m pip install --user tensorboardX
 #python3 -m pip install --user note_seq
 
-pip install --upgrade pip==24.0
+pip install --upgrade pip==21.0
 
-pip install torch==1.5.1+cu92 torchvision==0.6.1+cu92 \
-  -f https://download.pytorch.org/whl/torch_stable.html
-python3 -m pip install nltk
-python3 -m pip install texttable
-python3 -m pip install yacs
+conda install pytorch==1.5.1 torchvision==0.6.1 cudatoolkit=9.2 -c pytorch
+pip install nltk
+pip install texttable
+pip install yacs
 
-python3 -m pip install transformers==2.5.1
-python3 -m pip install tqdm==4.41.1
-python3 -m pip install tensorboardX
-python3 -m pip install note_seq
+pip install transformers==2.5.1
+pip install tqdm==4.41.1
+pip install tensorboardX
+pip install note_seq
