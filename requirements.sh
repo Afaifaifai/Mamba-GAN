@@ -1,3 +1,8 @@
+#!/usr/bin/env bash
+set -e
+
+conda activate py37
+
 ###  TransformerXL
 ### /opt/conda/bin/python -m pip install --upgrade pip
 #python3 -m pip install --user torch==1.5.*
