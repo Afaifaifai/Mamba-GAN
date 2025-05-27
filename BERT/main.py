@@ -724,7 +724,7 @@ def main():
         args.block_size = tokenizer.max_len
         # Our input block size will be the max possible for the model
     else:
-        args.block_size = min(args.block_size, tokenizer.max_len)
+        args.block_size = min(args.block_size, tokenizer.model_max_length)
 
     if args.model_name_or_path:
         model = model_class.from_pretrained(
