@@ -87,7 +87,7 @@ if __name__ == '__main__':
                         help='Whether to encode the official Maestro dataset.')
     parser.add_argument('--mode', type=str,
                         help='Convert to/from MIDIs to TXT/Numpy',
-                        choices=['to_txt', 'to_midi', 'txt_to_alltxt'
+                        choices=['to_txt', 'to_midi', 'txt_to_alltxt',
                                  'midi_to_npy', 'npy_to_midi'],
                         default='to_txt')
     parser.add_argument('--stretch_factors', type=str, help='Stretch Factors',
