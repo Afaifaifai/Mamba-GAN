@@ -20,6 +20,8 @@ import pandas as pd
 import logging
 sys.path.append(os.path.dirname(sys.path[0]))
 from utils import find_files_by_extensions
+import tqdm
+import glob
 
 _CURR_DIR = os.path.realpath(os.path.dirname(os.path.realpath(__file__)))
 MAESTOR_V1_DIR = os.path.join(_CURR_DIR, 'maestro-v1.0.0')
@@ -201,3 +203,64 @@ if __name__ == '__main__':
               .format(time.time() - start, len(input_paths)))
     else:
         raise NotImplementedError
+    
+
+
+    def merge_txt_files_in_folder(source_folder, output_file):
+        """
+        掃描一個來源資料夾，找到其中所有的 .txt 檔案，
+        將每個檔案的內容合併成一行，然後全部寫入一個大的輸出檔案。
+
+        Args:
+            source_folder (str): 包含多個 .txt 檔案的來源資料夾路徑。
+            output_file (str): 合併後要儲存的單一檔案路徑。
+        """
+        # 使用 glob 找到所有 .txt 檔案的路徑
+        txt_files = glob.glob(os.path.join(source_folder, '*.txt'))
+        
+        if not txt_files:
+            print(f"警告：在 '{source_folder}' 中沒有找到任何 .txt 檔案。")
+            return
+
+        print(f"找到 {len(txt_files)} 個 .txt 檔案。開始從 '{source_folder}' 合併至 '{output_file}'...")
+        
+        # 打開輸出的檔案準備寫入
+        with open(output_file, 'w', encoding='utf-8') as f_out:
+            # 使用 tqdm 顯示進度條
+            for file_path in tqdm(txt_files, desc=f"合併 {os.path.basename(source_folder)}"):
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f_in:
+                        # 讀取檔案中的所有行 (每個 token)，並移除換行符
+                        tokens = [line.strip() for line in f_in.readlines()]
+                        # 將所有 token 用空格連接成一個長字串
+                        sequence_line = " ".join(tokens)
+                        # 將這個代表單一序列的長字串寫入輸出檔案，並加上換行符
+                        f_out.write(sequence_line + "\n")
+                except Exception as e:
+                    print(f"處理檔案 {file_path} 時發生錯誤: {e}")
+                    
+        print(f"成功！'{source_folder}' 中的所有 .txt 檔案已合併至 '{output_file}'。")
+
+    if args.mode == 'to_txt':
+        BASE_DATA_DIR = "./maestro_magenta_s5_t3" 
+
+        # --- 定義來源資料夾和目標檔案 ---
+        # key 是來源資料夾的名稱，value 是要輸出的目標檔案名稱
+        split_config = {
+            "train": "train_all_data.txt",
+            "valid": "valid_all_data.txt",
+            "test": "test_all_data.txt"
+        }
+
+        # --- 開始執行合併 ---
+        for split_name, output_filename in split_config.items():
+            # 組合出完整的來源資料夾路徑
+            source_dir = os.path.join(BASE_DATA_DIR, split_name)
+            # 組合出完整的輸出檔案路徑
+            output_path = os.path.join(BASE_DATA_DIR, output_filename)
+            
+            # 呼叫合併函式
+            merge_txt_files_in_folder(source_dir, output_path)
+            print("-" * 50)
+
+        print("所有數據集合併完成！")
