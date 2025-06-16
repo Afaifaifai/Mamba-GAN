@@ -103,3 +103,32 @@ class MIDITokenizer(BertTokenizer):
 
     def encode(self, input_numpy):
         return np.load(input_numpy)
+    
+
+if __name__ == '__main__':
+    VOCAB_PATH = "./midi_tokenizer/vocab.txt"
+
+    # 我們將 tokenizer 儲存到這個新目錄，您可以自訂名稱
+    SAVE_DIRECTORY = "./midi_tokenizer" 
+    # ==============================================================================
+
+    print(f"正在從詞彙表檔案: '{VOCAB_PATH}' 建立 Tokenizer...")
+
+    try:
+        # 實例化您的客製化 Tokenizer
+        # 舊指令中沒有傳遞其他參數給 Tokenizer，所以這裡也只傳入 vocab_file
+        tokenizer = MIDITokenizer(vocab_file=VOCAB_PATH)
+
+        # 將這個物件儲存為 Hugging Face 的標準格式
+        tokenizer.save_pretrained(SAVE_DIRECTORY)
+
+        print("-" * 50)
+        print(f"🎉 成功！您的客製化 Tokenizer 已儲存至 '{SAVE_DIRECTORY}' 資料夾。")
+        print("下一步，您可以在 run_mlm.py 的指令中使用這個路徑。")
+        print("-" * 50)
+
+    except FileNotFoundError:
+        print(f"錯誤：找不到詞彙表檔案！請確認 '{VOCAB_PATH}' 路徑是否正確。")
+    except Exception as e:
+        print(f"發生預期外的錯誤: {e}")
+

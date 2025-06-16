@@ -279,7 +279,7 @@ class PerformanceEventRepo(object):
 
     def to_text_transposition(self, input_midi, output_txt):
         for i, ids in enumerate(self.encode_transposition(input_midi)):
-            event_text = [self.ids_to_events(idx) for idx in ids]
+            event_text = [self.ids_to_events[idx] for idx in ids]
             filename, ext = os.path.splitext(output_txt)
             with open(filename + '_arg' + str(i) + '.txt', 'w') as f:
                 f.write("\n".join(event_text))
