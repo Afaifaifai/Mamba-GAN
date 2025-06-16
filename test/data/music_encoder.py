@@ -20,7 +20,7 @@ import pandas as pd
 import logging
 sys.path.append(os.path.dirname(sys.path[0]))
 from utils import find_files_by_extensions
-import tqdm
+from tqdm import tqdm
 import glob
 
 _CURR_DIR = os.path.realpath(os.path.dirname(os.path.realpath(__file__)))
@@ -87,7 +87,7 @@ if __name__ == '__main__':
                         help='Whether to encode the official Maestro dataset.')
     parser.add_argument('--mode', type=str,
                         help='Convert to/from MIDIs to TXT/Numpy',
-                        choices=['to_txt', 'to_midi',
+                        choices=['to_txt', 'to_midi', 'txt_to_alltxt'
                                  'midi_to_npy', 'npy_to_midi'],
                         default='to_txt')
     parser.add_argument('--stretch_factors', type=str, help='Stretch Factors',
@@ -135,6 +135,41 @@ if __name__ == '__main__':
     def run_npy_to_midi(path, out_dir):
         filename, extension = os.path.splitext(os.path.basename(path))
         encoder.npy_to_midi(path, os.path.join(out_dir, filename + '.mid'))
+
+    def merge_txt_files_in_folder(source_folder, output_file):
+        """
+        掃描一個來源資料夾，找到其中所有的 .txt 檔案，
+        將每個檔案的內容合併成一行，然後全部寫入一個大的輸出檔案。
+
+        Args:
+            source_folder (str): 包含多個 .txt 檔案的來源資料夾路徑。
+            output_file (str): 合併後要儲存的單一檔案路徑。
+        """
+        # 使用 glob 找到所有 .txt 檔案的路徑
+        txt_files = glob.glob(os.path.join(source_folder, '*.txt'))
+        
+        if not txt_files:
+            print(f"警告：在 '{source_folder}' 中沒有找到任何 .txt 檔案。")
+            return
+
+        print(f"找到 {len(txt_files)} 個 .txt 檔案。開始從 '{source_folder}' 合併至 '{output_file}'...")
+        
+        # 打開輸出的檔案準備寫入
+        with open(output_file, 'w', encoding='utf-8') as f_out:
+            # 使用 tqdm 顯示進度條
+            for file_path in tqdm(txt_files, desc=f"合併 {os.path.basename(source_folder)}"):
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f_in:
+                        # 讀取檔案中的所有行 (每個 token)，並移除換行符
+                        tokens = [line.strip() for line in f_in.readlines()]
+                        # 將所有 token 用空格連接成一個長字串
+                        sequence_line = " ".join(tokens)
+                        # 將這個代表單一序列的長字串寫入輸出檔案，並加上換行符
+                        f_out.write(sequence_line + "\n")
+                except Exception as e:
+                    print(f"處理檔案 {file_path} 時發生錯誤: {e}")
+                    
+        print(f"成功！'{source_folder}' 中的所有 .txt 檔案已合併至 '{output_file}'。")
 
     num_cpus = mpl.cpu_count()
     if not os.path.exists(args.output_folder):
@@ -201,47 +236,7 @@ if __name__ == '__main__':
                      input_paths)
         print('Test converted! Spent {}s to convert {} samples.'
               .format(time.time() - start, len(input_paths)))
-    else:
-        raise NotImplementedError
-    
-
-
-    def merge_txt_files_in_folder(source_folder, output_file):
-        """
-        掃描一個來源資料夾，找到其中所有的 .txt 檔案，
-        將每個檔案的內容合併成一行，然後全部寫入一個大的輸出檔案。
-
-        Args:
-            source_folder (str): 包含多個 .txt 檔案的來源資料夾路徑。
-            output_file (str): 合併後要儲存的單一檔案路徑。
-        """
-        # 使用 glob 找到所有 .txt 檔案的路徑
-        txt_files = glob.glob(os.path.join(source_folder, '*.txt'))
-        
-        if not txt_files:
-            print(f"警告：在 '{source_folder}' 中沒有找到任何 .txt 檔案。")
-            return
-
-        print(f"找到 {len(txt_files)} 個 .txt 檔案。開始從 '{source_folder}' 合併至 '{output_file}'...")
-        
-        # 打開輸出的檔案準備寫入
-        with open(output_file, 'w', encoding='utf-8') as f_out:
-            # 使用 tqdm 顯示進度條
-            for file_path in tqdm(txt_files, desc=f"合併 {os.path.basename(source_folder)}"):
-                try:
-                    with open(file_path, 'r', encoding='utf-8') as f_in:
-                        # 讀取檔案中的所有行 (每個 token)，並移除換行符
-                        tokens = [line.strip() for line in f_in.readlines()]
-                        # 將所有 token 用空格連接成一個長字串
-                        sequence_line = " ".join(tokens)
-                        # 將這個代表單一序列的長字串寫入輸出檔案，並加上換行符
-                        f_out.write(sequence_line + "\n")
-                except Exception as e:
-                    print(f"處理檔案 {file_path} 時發生錯誤: {e}")
-                    
-        print(f"成功！'{source_folder}' 中的所有 .txt 檔案已合併至 '{output_file}'。")
-
-    if args.mode == 'to_txt':
+    elif args.mode == 'txt_to_alltxt':
         BASE_DATA_DIR = "./maestro_magenta_s5_t3" 
 
         # --- 定義來源資料夾和目標檔案 ---
@@ -264,3 +259,6 @@ if __name__ == '__main__':
             print("-" * 50)
 
         print("所有數據集合併完成！")
+
+    else:
+        raise NotImplementedError
