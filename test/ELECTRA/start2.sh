@@ -2,13 +2,13 @@
 set -e
 
 # --- 我們預處理好的 Arrow 數據集資料夾路徑 ---
-PROCESSED_DATASET_PATH="/home/afaifai/Mamba-GAN/test/data/arrow_dataset"
+PROCESSED_DATASET_PATH="../data/arrow_dataset"
 
-python /home/afaifai/Mamba-GAN/test/ELECTRA/main.py \
-    --output_dir /content/drive/MyDrive/temp \
+python main.py \
+    --output_dir=output_dir \
     --overwrite_output_dir \
     --model_name_or_path google/electra-base-discriminator \
-    --tokenizer_name /home/afaifai/Mamba-GAN/test/ELECTRA/midi_tokenizer \
+    --tokenizer_name ./midi_tokenizer \
     --trust_remote_code True \
     --dataset_name ${PROCESSED_DATASET_PATH} \
     --max_seq_length 20 \
