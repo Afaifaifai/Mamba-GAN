@@ -31,7 +31,7 @@ from typing import Optional
 import datasets
 import evaluate
 import torch
-from datasets import load_dataset
+from datasets import load_dataset, load_from_disk
 
 import transformers
 from transformers import (
@@ -51,11 +51,6 @@ from transformers.trainer_utils import get_last_checkpoint
 from transformers.utils import check_min_version, send_example_telemetry
 from transformers.utils.versions import require_version
 
-from tokenization_midi import MIDITokenizer
-from datasets import load_from_disk
-
-# 1. 修改__post_init__的檢查成pass
-# 2. 修改資料集載入邏輯 (load_dataset -> load_from_disk)
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 check_min_version("4.53.0.dev0")
@@ -141,6 +136,15 @@ class ModelArguments:
             "choices": ["auto", "bfloat16", "float16", "float32"],
         },
     )
+    low_cpu_mem_usage: bool = field(
+        default=False,
+        metadata={
+            "help": (
+                "It is an option to create the model as an empty shell, then only materialize its parameters when the pretrained weights are loaded. "
+                "set True will benefit LLM loading time and RAM consumption."
+            )
+        },
+    )
 
     def __post_init__(self):
         if self.config_overrides is not None and (self.config_name is not None or self.model_name_or_path is not None):
@@ -222,6 +226,12 @@ class DataTrainingArguments:
             )
         },
     )
+
+    processed_data_dir: Optional[str] = field(
+        default='../data/maestro_magenta_s5_t3/processed_data',
+        metadata={"help": "Path to a directory containing the pre-processed, tokenized, and grouped dataset."},
+    )
+
     streaming: bool = field(default=False, metadata={"help": "Enable streaming mode"})
 
     def __post_init__(self):
@@ -231,15 +241,14 @@ class DataTrainingArguments:
         if self.dataset_name is None and self.train_file is None and self.validation_file is None:
             raise ValueError("Need either a dataset name or a training/validation file.")
         else:
-            # if self.train_file is not None:
-            #     extension = self.train_file.split(".")[-1]
-            #     if extension not in ["csv", "json", "txt"]:
-            #         raise ValueError("`train_file` should be a csv, a json or a txt file.")
-            # if self.validation_file is not None:
-            #     extension = self.validation_file.split(".")[-1]
-            #     if extension not in ["csv", "json", "txt"]:
-            #         raise ValueError("`validation_file` should be a csv, a json or a txt file.")
-            pass
+            if self.train_file is not None:
+                extension = self.train_file.split(".")[-1]
+                if extension not in ["csv", "json", "txt"]:
+                    raise ValueError("`train_file` should be a csv, a json or a txt file.")
+            if self.validation_file is not None:
+                extension = self.validation_file.split(".")[-1]
+                if extension not in ["csv", "json", "txt"]:
+                    raise ValueError("`validation_file` should be a csv, a json or a txt file.")
 
 
 def main():
@@ -312,50 +321,15 @@ def main():
     #
     # In distributed training, the load_dataset function guarantee that only one local process can concurrently
     # download the dataset.
-    if data_args.dataset_name is not None and os.path.isdir(data_args.dataset_name): # 已經手動分類好train, test, valid的arrow表示的dataset
-        print("0000000000000000000000000000")
-        logger.info(f"Loading dataset from disk at {data_args.dataset_name}")
-        raw_datasets = load_from_disk(data_args.dataset_name)
-        print(raw_datasets)
+    if data_args.dataset_name is not None:
         # Downloading and loading a dataset from the hub.
-        # raw_datasets = load_dataset(
-        #     data_args.dataset_name,
-        #     data_args.dataset_config_name,
-        #     cache_dir=model_args.cache_dir,
-        #     token=model_args.token,
-        #     streaming=data_args.streaming,
-        #     trust_remote_code=model_args.trust_remote_code,
-        # )
-        # if "validation" not in raw_datasets.keys():
-        #     raw_datasets["validation"] = load_dataset(
-        #         data_args.dataset_name,
-        #         data_args.dataset_config_name,
-        #         split=f"train[:{data_args.validation_split_percentage}%]",
-        #         cache_dir=model_args.cache_dir,
-        #         token=model_args.token,
-        #         streaming=data_args.streaming,
-        #         trust_remote_code=model_args.trust_remote_code,
-        #     )
-        #     raw_datasets["train"] = load_dataset(
-        #         data_args.dataset_name,
-        #         data_args.dataset_config_name,
-        #         split=f"train[{data_args.validation_split_percentage}%:]",
-        #         cache_dir=model_args.cache_dir,
-        #         token=model_args.token,
-        #         streaming=data_args.streaming,
-        #         trust_remote_code=model_args.trust_remote_code,
-        #     )
-        # 如果 dataset_name 是一個存在的本地資料夾，就使用 load_from_disk
-        
-    elif data_args.dataset_name is not None:
-        # 如果 dataset_name 不是資料夾，就從 Hub 下載
-        logger.info(f"Loading dataset from the Hub: {data_args.dataset_name}")
         raw_datasets = load_dataset(
             data_args.dataset_name,
             data_args.dataset_config_name,
             cache_dir=model_args.cache_dir,
             token=model_args.token,
             streaming=data_args.streaming,
+            trust_remote_code=model_args.trust_remote_code,
         )
         if "validation" not in raw_datasets.keys():
             raw_datasets["validation"] = load_dataset(
@@ -383,7 +357,7 @@ def main():
             extension = data_args.train_file.split(".")[-1]
         if data_args.validation_file is not None:
             data_files["validation"] = data_args.validation_file
-            extension = data_args.validation_file.split(".")[-1] # 抓取副檔名
+            extension = data_args.validation_file.split(".")[-1]
         if extension == "txt":
             extension = "text"
         raw_datasets = load_dataset(
@@ -468,6 +442,7 @@ def main():
             token=model_args.token,
             trust_remote_code=model_args.trust_remote_code,
             torch_dtype=torch_dtype,
+            low_cpu_mem_usage=model_args.low_cpu_mem_usage,
         )
     else:
         logger.info("Training new model from scratch")
@@ -479,10 +454,22 @@ def main():
     if len(tokenizer) > embedding_size:
         model.resize_token_embeddings(len(tokenizer))
 
-    if "input_ids" in raw_datasets["train"].features: # 讀進來純token表示檔案 (已處理過)
-        logger.info("Dataset already contains 'input_ids', skipping tokenization.")
-        tokenized_datasets = raw_datasets
-    else: # 讀進來純txt檔案
+
+    tokenized_datasets = None
+    # 步驟 1: 優先嘗試從已處理好的快取資料夾載入
+    if data_args.processed_data_dir and os.path.isdir(data_args.processed_data_dir):
+        logger.info(f"偵測到快取路徑，正在從 {data_args.processed_data_dir} 載入...")
+        try:
+            tokenized_datasets = load_from_disk(data_args.processed_data_dir)
+            logger.info("✅ 成功從快取載入數據！")
+        except Exception as e:
+            logger.warning(f"載入快取失敗，將從頭開始處理。錯誤: {e}")
+            tokenized_datasets = None
+
+    # 步驟 2: 如果快取不存在或載入失敗，則執行一次完整的、原始的數據處理流程
+    if tokenized_datasets is None:
+        logger.info("沒有找到快取或載入失敗，從原始 .txt 檔案開始處理...")
+
         # Preprocessing the datasets.
         # First we tokenize all the texts.
         if training_args.do_train:
@@ -605,6 +592,15 @@ def main():
                         batched=True,
                     )
 
+        # 步驟 3: 處理完成後，儲存結果，為下一次的快速載入做準備
+        if data_args.processed_data_dir:
+            logger.info(f"正在儲存處理好的數據到快取: {data_args.processed_data_dir}")
+            try:
+                tokenized_datasets.save_to_disk(data_args.processed_data_dir)
+                logger.info("✅ 成功儲存數據到快取。")
+            except Exception as e:
+                logger.error(f"儲存快取失敗。錯誤: {e}")
+
     if training_args.do_train:
         if "train" not in tokenized_datasets:
             raise ValueError("--do_train requires a train dataset")
@@ -722,5 +718,4 @@ def _mp_fn(index):
 
 
 if __name__ == "__main__":
-    # AutoTokenizer.register(MIDITokenizer)  
     main()
