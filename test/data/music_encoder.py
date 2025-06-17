@@ -23,6 +23,7 @@ from utils import find_files_by_extensions
 from tqdm import tqdm
 import glob
 from datasets import Dataset, DatasetDict
+import numpy as np
 
 _CURR_DIR = os.path.realpath(os.path.dirname(os.path.realpath(__file__)))
 MAESTOR_V1_DIR = os.path.join(_CURR_DIR, 'maestro-v1.0.0')
