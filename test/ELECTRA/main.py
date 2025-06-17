@@ -52,7 +52,10 @@ from transformers.utils import check_min_version, send_example_telemetry
 from transformers.utils.versions import require_version
 
 from tokenization_midi import MIDITokenizer
+from datasets import load_from_disk
 
+# 1. 修改__post_init__的檢查成pass
+# 2. 修改資料集載入邏輯 (load_dataset -> load_from_disk)
 
 # Will error if the minimal version of Transformers is not installed. Remove at your own risks.
 check_min_version("4.53.0.dev0")
@@ -309,15 +312,48 @@ def main():
     #
     # In distributed training, the load_dataset function guarantee that only one local process can concurrently
     # download the dataset.
-    if data_args.dataset_name is not None:
+    if data_args.dataset_name is not None: # 已經手動分類好train, test, valid的arrow表示的dataset
+        logger.info(f"Loading dataset from disk at {data_args.dataset_name}")
+        raw_datasets = load_from_disk(data_args.dataset_name)
         # Downloading and loading a dataset from the hub.
+        # raw_datasets = load_dataset(
+        #     data_args.dataset_name,
+        #     data_args.dataset_config_name,
+        #     cache_dir=model_args.cache_dir,
+        #     token=model_args.token,
+        #     streaming=data_args.streaming,
+        #     trust_remote_code=model_args.trust_remote_code,
+        # )
+        # if "validation" not in raw_datasets.keys():
+        #     raw_datasets["validation"] = load_dataset(
+        #         data_args.dataset_name,
+        #         data_args.dataset_config_name,
+        #         split=f"train[:{data_args.validation_split_percentage}%]",
+        #         cache_dir=model_args.cache_dir,
+        #         token=model_args.token,
+        #         streaming=data_args.streaming,
+        #         trust_remote_code=model_args.trust_remote_code,
+        #     )
+        #     raw_datasets["train"] = load_dataset(
+        #         data_args.dataset_name,
+        #         data_args.dataset_config_name,
+        #         split=f"train[{data_args.validation_split_percentage}%:]",
+        #         cache_dir=model_args.cache_dir,
+        #         token=model_args.token,
+        #         streaming=data_args.streaming,
+        #         trust_remote_code=model_args.trust_remote_code,
+        #     )
+        # 如果 dataset_name 是一個存在的本地資料夾，就使用 load_from_disk
+        
+    elif data_args.dataset_name is not None:
+        # 如果 dataset_name 不是資料夾，就從 Hub 下載
+        logger.info(f"Loading dataset from the Hub: {data_args.dataset_name}")
         raw_datasets = load_dataset(
             data_args.dataset_name,
             data_args.dataset_config_name,
             cache_dir=model_args.cache_dir,
             token=model_args.token,
             streaming=data_args.streaming,
-            trust_remote_code=model_args.trust_remote_code,
         )
         if "validation" not in raw_datasets.keys():
             raw_datasets["validation"] = load_dataset(
@@ -345,7 +381,7 @@ def main():
             extension = data_args.train_file.split(".")[-1]
         if data_args.validation_file is not None:
             data_files["validation"] = data_args.validation_file
-            extension = data_args.validation_file.split(".")[-1]
+            extension = data_args.validation_file.split(".")[-1] # 抓取副檔名
         if extension == "txt":
             extension = "text"
         raw_datasets = load_dataset(
