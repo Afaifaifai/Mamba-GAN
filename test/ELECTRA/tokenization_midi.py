@@ -23,9 +23,7 @@ import numpy as np
 
 logger = logging.getLogger(__name__)
 
-VOCAB_FILES_NAMES = {"vocab_file": os.path.join(os.path.realpath(os.path.dirname(os.path.realpath(__file__))),
-                                                "magenta_vocab_file.txt")
-                     }
+VOCAB_FILES_NAMES = {"vocab_file": os.path.join(os.path.realpath(os.path.dirname(os.path.realpath(__file__))), "magenta_vocab_file.txt")}
 
 PRETRAINED_VOCAB_FILES_MAP = {
     "vocab_file": {
@@ -106,10 +104,11 @@ class MIDITokenizer(BertTokenizer):
     
 
 if __name__ == '__main__':
-    VOCAB_PATH = "./midi_tokenizer/magenta_vocab_file.txt"
-
-    # 我們將 tokenizer 儲存到這個新目錄，您可以自訂名稱
-    SAVE_DIRECTORY = "./midi_tokenizer" 
+    # 獲取此腳本檔案 (tokenization_midi.py) 所在的絕對目錄路徑
+    SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+    # 基於腳本所在目錄，來組合出詞彙表和儲存目錄的絕對路徑
+    VOCAB_PATH = os.path.join(SCRIPT_DIR, "midi_tokenizer", "magenta_vocab_file.txt")
+    SAVE_DIRECTORY = os.path.join(SCRIPT_DIR, "midi_tokenizer")
     # ==============================================================================
 
     print(f"正在從詞彙表檔案: '{VOCAB_PATH}' 建立 Tokenizer...")
