@@ -107,6 +107,8 @@ if __name__ == '__main__':
     # 獲取此腳本檔案 (tokenization_midi.py) 所在的絕對目錄路徑
     SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
     # 基於腳本所在目錄，來組合出詞彙表和儲存目錄的絕對路徑
+    # VOCAB_PATH = os.path.join(SCRIPT_DIR, "midi_tokenizer", "magenta_vocab_file.txt")
+    # SAVE_DIRECTORY = os.path.join(SCRIPT_DIR, "midi_tokenizer")
     VOCAB_PATH = os.path.join(SCRIPT_DIR, "magenta_vocab_file.txt")
     SAVE_DIRECTORY = SCRIPT_DIR
     # ==============================================================================
