@@ -2,7 +2,7 @@
 set -e
 
 # --- 我們預處理好的 Arrow 數據集資料夾路徑 ---
-PROCESSED_DATASET_PATH="/home/afaifai/Mamba-GAN/data/arrow_dataset"
+PROCESSED_DATASET_PATH="/home/afaifai/Mamba-GAN/test/data/arrow_dataset"
 
 python /home/afaifai/Mamba-GAN/test/ELECTRA/main.py \
     --output_dir /content/drive/MyDrive/temp \
