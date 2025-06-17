@@ -172,19 +172,85 @@ if __name__ == '__main__':
                     
         print(f"成功！'{source_folder}' 中的所有 .txt 檔案已合併至 '{output_file}'。")
 
-    def load_sequences_from_npy_folder(folder_path):
-        """從一個資料夾中載入所有 .npy 檔案，並回傳一個包含所有序列的列表。"""
-        npy_files = glob.glob(os.path.join(folder_path, '*.npy'))
+    def load_sequences_from_npy_folder(folder_path: str) -> list:
+        """
+        從一個資料夾中載入所有 .npy 檔案，並回傳一個包含所有序列的 Python 列表。
+        
+        Args:
+            folder_path (str): 包含 .npy 檔案的來源資料夾路徑。
+            
+        Returns:
+            list: 一個列表，其中每個元素是另一個代表 token ID 序列的列表。
+        """
+        # 組合出搜尋模式，例如: /path/to/train/*.npy
+        search_pattern = os.path.join(folder_path, '*.npy')
+        npy_files = glob.glob(search_pattern)
+
+        if not npy_files:
+            print(f"警告：在 '{folder_path}' 中沒有找到任何 .npy 檔案。將回傳空列表。")
+            return []
+
         all_sequences = []
-        print(f"在 '{folder_path}' 中找到 {len(npy_files)} 個 .npy 檔案...")
-        for file_path in tqdm(npy_files, desc=f"載入 {os.path.basename(folder_path)}"):
+        # 使用 tqdm 顯示進度
+        for file_path in tqdm(npy_files, desc=f"從 {os.path.basename(folder_path)} 載入 npy"):
             try:
-                # 載入 .npy 檔案，並將其轉換為 list
+                # 載入 .npy 檔案並轉換為 Python list
                 sequence = np.load(file_path).tolist()
                 all_sequences.append(sequence)
             except Exception as e:
                 print(f"讀取檔案 {file_path} 時發生錯誤: {e}")
+                
         return all_sequences
+
+
+    def convert_npy_splits_to_arrow_dataset(base_npy_dir: str, arrow_save_path: str):
+        """
+        讀取包含 train/valid/test 子資料夾的 .npy 數據根目錄，
+        將它們轉換並合併成一個 Hugging Face Arrow 數據集。
+
+        Args:
+            base_npy_dir (str): 包含 train/, valid/, test/ .npy 子資料夾的根目錄。
+            arrow_save_path (str): 您希望儲存最終 Arrow 數據集的目標資料夾路徑。
+        """
+        print(f"開始從 .npy 檔案建立 Hugging Face Dataset...")
+        print(f"來源資料夾: {base_npy_dir}")
+        print(f"目標 Arrow 資料夾: {arrow_save_path}")
+
+        # 定義要處理的數據分割
+        splits = ['train', 'validation', 'test']
+        dataset_dict_content = {}
+
+        # 遍歷每一個分割 (train, validation, test)
+        for split_name in splits:
+            # 特別處理 'validation' 名稱的對應
+            folder_name = 'valid' if split_name == 'validation' else split_name
+            source_folder = os.path.join(base_npy_dir, folder_name)
+            
+            # 呼叫輔助函式來載入該分割的所有序列
+            sequences = load_sequences_from_npy_folder(source_folder)
+            
+            # 將序列列表轉換成 Dataset 物件
+            # `datasets` 函式庫期望的格式是 {'欄位名': [資料列表]}
+            dataset = Dataset.from_dict({'input_ids': sequences})
+            
+            # 將處理好的 Dataset 物件存入字典
+            dataset_dict_content[split_name] = dataset
+
+        # 將包含所有分割的字典，轉換成一個完整的 DatasetDict 物件
+        final_dataset = DatasetDict(dataset_dict_content)
+
+        print("\n數據集結構預覽:")
+        print(final_dataset)
+        
+        # 將這個數據集字典以高效的 Arrow 格式儲存到硬碟
+        print(f"\n正在將數據集儲存至 '{arrow_save_path}'...")
+        os.makedirs(arrow_save_path, exist_ok=True)
+        final_dataset.save_to_disk(arrow_save_path)
+
+        print("-" * 50)
+        print(f"🎉 成功！您的 .npy 數據已轉換為 Arrow 數據集。")
+        print(f"儲存位置: '{arrow_save_path}'")
+        print("-" * 50)
 
     num_cpus = mpl.cpu_count()
     if not os.path.exists(args.output_folder):
@@ -276,45 +342,18 @@ if __name__ == '__main__':
         print("所有數據集合併完成！")
 
     elif args.mode == 'npy_to_allnpy':
-        # --- 請設定您的來源和目標路徑 ---
-        # 包含 train, valid, test 三個子資料夾的 .npy 數據根目錄
-        # 這應該是您原始 music_encoder.py 產生 .npy 的地方
-        BASE_NPY_DIR = "./maestro_magenta_s5_t3" 
-        
-        # 您想要將最終處理好的 Arrow 格式數據集儲存到哪裡
-        FINAL_DATASET_SAVE_PATH = "./arrow_dataset"
-        # ------------------------------------
+        # 1. 指定包含 train/, valid/, test/ .npy 子資料夾的根目錄
+        #    (這是您執行完 midi_to_npy 模式後產生的資料夾)
+        SOURCE_NPY_ROOT = "/home/afaifai/Mamba-GAN/data/maestro_magenta_s5_t3_processed_npy"
 
-        print("開始從 .npy 檔案建立 Hugging Face Dataset...")
+        # 2. 指定您希望儲存最終 Arrow 數據集的目標資料夾
+        ARROW_OUTPUT_PATH = "/home/afaifai/Mamba-GAN/data/arrow_dataset"
 
-        # 分別為 train, valid, test 建立 Dataset 物件
-        train_sequences = load_sequences_from_npy_folder(os.path.join(BASE_NPY_DIR, 'train'))
-        valid_sequences = load_sequences_from_npy_folder(os.path.join(BASE_NPY_DIR, 'valid'))
-        test_sequences = load_sequences_from_npy_folder(os.path.join(BASE_NPY_DIR, 'test'))
-
-        # 將載入的序列轉換成 Dataset 要求的字典格式
-        train_dataset = Dataset.from_dict({"input_ids": train_sequences})
-        valid_dataset = Dataset.from_dict({"input_ids": valid_sequences})
-        test_dataset = Dataset.from_dict({"input_ids": test_sequences})
-
-        # 將三個 Dataset 物件打包成一個 DatasetDict
-        raw_datasets = DatasetDict({
-            'train': train_dataset,
-            'validation': valid_dataset,
-            'test': test_dataset
-        })
-
-        print("\n數據集結構預覽:")
-        print(raw_datasets)
-        
-        # 將這個數據集字典以高效的 Arrow 格式儲存到硬碟
-        print(f"\n正在將數據集儲存至 '{FINAL_DATASET_SAVE_PATH}'...")
-        raw_datasets.save_to_disk(FINAL_DATASET_SAVE_PATH)
-
-        print("-" * 50)
-        print("🎉 成功！您的 .npy 數據已轉換為高效的 Arrow 數據集。")
-        print(f"現在您可以在訓練指令中使用 '{FINAL_DATASET_SAVE_PATH}' 這個路徑了。")
-        print("-" * 50)
+        # 3. 執行轉換函式
+        convert_npy_splits_to_arrow_dataset(
+            base_npy_dir=SOURCE_NPY_ROOT,
+            arrow_save_path=ARROW_OUTPUT_PATH
+        )
 
     else:
         raise NotImplementedError
