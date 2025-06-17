@@ -17,7 +17,6 @@ python /home/afaifai/Mamba-GAN/test/ELECTRA/main.py \
     --max_seq_length 20 \
     --do_train \
     --do_eval \
-    --evaluation_strategy steps \
     --per_device_train_batch_size 2048 \
     --per_device_eval_batch_size 2048 \
     --learning_rate 1e-4 \
