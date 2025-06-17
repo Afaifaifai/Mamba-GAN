@@ -344,7 +344,7 @@ if __name__ == '__main__':
     elif args.mode == 'npy_to_allnpy':
         # 1. 指定包含 train/, valid/, test/ .npy 子資料夾的根目錄
         #    (這是您執行完 midi_to_npy 模式後產生的資料夾)
-        SOURCE_NPY_ROOT = "/home/afaifai/Mamba-GAN/data/maestro_magenta_s5_t3_processed_npy"
+        SOURCE_NPY_ROOT = "/home/afaifai/Mamba-GAN/data/maestro_magenta_s5_t3"
 
         # 2. 指定您希望儲存最終 Arrow 數據集的目標資料夾
         ARROW_OUTPUT_PATH = "/home/afaifai/Mamba-GAN/data/arrow_dataset"
