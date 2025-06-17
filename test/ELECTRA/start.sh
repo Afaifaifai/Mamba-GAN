@@ -21,7 +21,6 @@ python /home/afaifai/Mamba-GAN/test/ELECTRA/main.py \
     --evaluation_strategy steps \
     --per_device_train_batch_size 2048 \
     --per_device_eval_batch_size 2048 \
-    --mlm \
     --learning_rate 1e-4 \
     --num_train_epochs 10 \
     --save_steps 1000 \
