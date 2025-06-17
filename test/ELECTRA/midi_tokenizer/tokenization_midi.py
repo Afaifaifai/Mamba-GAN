@@ -98,9 +98,6 @@ class MIDITokenizer(BertTokenizer):
         self.vocab = load_vocab(vocab_file)
         self.event_type = event_type
         self.wordpiece_tokenizer = WordpieceTokenizer(vocab=self.vocab, unk_token=self.unk_token)
-
-    def encode(self, input_numpy):
-        return np.load(input_numpy)
     
 
 if __name__ == '__main__':
