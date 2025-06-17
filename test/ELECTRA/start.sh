@@ -12,6 +12,7 @@ python /home/afaifai/Mamba-GAN/test/ELECTRA/main.py \
     --model_name_or_path google/electra-base-discriminator \
     --tokenizer_name ./midi_tokenizer \
     --trust_remote_code True \
+    --processed_data_dir ../data/maestro_magenta_s5_t3/processed_data \
     --train_file ../data/maestro_magenta_s5_t3/train_all_data.txt \
     --validation_file ../data/maestro_magenta_s5_t3/valid_all_data.txt \
     --line_by_line \
