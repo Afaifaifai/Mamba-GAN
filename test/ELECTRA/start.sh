@@ -1,34 +1,30 @@
-# 執行新版 run_mlm.py，目標：訓練一個用於 MambaGAN 判別器的 ELECTRA 模型
-python main.py \
-    --output_dir ./output_dir \
+#!/bin/bash
+
+# 確保腳本在遇到錯誤時立即停止
+set -e
+
+# --- 執行新版的 run_mlm.py ---
+# 目標：在新腳本上，嚴格復現舊指令的實驗設定，並使用 ELECTRA 模型
+
+python /home/afaifai/Mamba-GAN/test/ELECTRA/main.py \
+    --output_dir /content/drive/MyDrive/temp \
     --overwrite_output_dir \
-    # --- 模型與 Tokenizer 設定 (核心修改) ---
-    # 選擇與 BERT-base 同級的 ELECTRA-base 作為模型
     --model_name_or_path google/electra-base-discriminator \
-    # << 關鍵 >>: 指定上一步打包好的 Tokenizer 目錄
-    --tokenizer_name ./midi_tokenizer/ \
-    # << 關鍵 >>: 覆寫模型配置，使其符合您舊的 5 層隱藏層設定
+    --tokenizer_name ./my_midi_tokenizer \
     --config_overrides "num_hidden_layers=5" \
-    \
-    # --- 數據設定 (完全對應舊指令) ---
-    --train_file ../data/maestro_magenta_s5_t3/train.txt \
-    --validation_file ../data/maestro_magenta_s5_t3/valid.txt \
+    --train_file ../data/maestro_magenta_s5_t3/train_all_data.txt \
+    --validation_file ../data/maestro_magenta_s5_t3/valid_all_data.txt \
     --line_by_line \
-    # 忠實還原舊指令的序列長度設定
     --max_seq_length 20 \
-    \
-    # --- 訓練與評估流程控制 (完全對應舊指令) ---
     --do_train \
     --do_eval \
     --evaluation_strategy steps \
-    # 忠實還原舊指令的批次大小設定 (來自 README)
     --per_device_train_batch_size 2048 \
     --per_device_eval_batch_size 2048 \
-    # 啟用 Masked Language Modeling
     --mlm \
-    \
-    # --- 其他超參數 (建議保持預設或根據需要調整) ---
     --learning_rate 1e-4 \
     --num_train_epochs 10 \
     --save_steps 1000 \
     --eval_steps 1000
+
+echo "腳本執行完畢。"
