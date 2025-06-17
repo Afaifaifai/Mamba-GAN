@@ -106,7 +106,7 @@ class MIDITokenizer(BertTokenizer):
     
 
 if __name__ == '__main__':
-    VOCAB_PATH = "./midi_tokenizer/vocab.txt"
+    VOCAB_PATH = "./midi_tokenizer/magenta_vocab.txt"
 
     # 我們將 tokenizer 儲存到這個新目錄，您可以自訂名稱
     SAVE_DIRECTORY = "./midi_tokenizer" 
