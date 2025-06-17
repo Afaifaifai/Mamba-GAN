@@ -87,7 +87,7 @@ class MIDITokenizer(BertTokenizer):
             **kwargs,
         )
 
-        self.build_vocab_file(VOCAB_FILES_NAMES["vocab_file"])
+        self.build_vocab_file(vocab_file)
         self.do_basic_tokenize = do_basic_tokenize
         if do_basic_tokenize:
             self.basic_tokenizer = BasicTokenizer(
