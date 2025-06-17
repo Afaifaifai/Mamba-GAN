@@ -10,7 +10,8 @@ python /home/afaifai/Mamba-GAN/test/ELECTRA/main.py \
     --model_name_or_path google/electra-base-discriminator \
     --tokenizer_name /home/afaifai/Mamba-GAN/test/ELECTRA/midi_tokenizer \
     --trust_remote_code True \
-    --dataset_name ${PROCESSED_DATASET_PATH} \
+    --train_file ${PROCESSED_DATASET_PATH}/train \
+    --validation_file ${PROCESSED_DATASET_PATH}/validation \
     --max_seq_length 20 \
     --do_train \
     --do_eval \
