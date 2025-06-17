@@ -11,7 +11,7 @@ python /home/afaifai/Mamba-GAN/test/ELECTRA/main.py \
     --overwrite_output_dir \
     --model_name_or_path google/electra-base-discriminator \
     --tokenizer_name ./my_midi_tokenizer \
-    --config_overrides "num_hidden_layers=5" \
+    # --config_overrides "num_hidden_layers=5" \
     --train_file ../data/maestro_magenta_s5_t3/train_all_data.txt \
     --validation_file ../data/maestro_magenta_s5_t3/valid_all_data.txt \
     --line_by_line \
