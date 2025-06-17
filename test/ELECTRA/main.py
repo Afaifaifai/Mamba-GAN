@@ -679,5 +679,5 @@ def _mp_fn(index):
 
 
 if __name__ == "__main__":
-    AutoTokenizer.register(MIDITokenizer)  
+    # AutoTokenizer.register(MIDITokenizer)  
     main()
