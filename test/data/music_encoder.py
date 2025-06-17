@@ -22,6 +22,7 @@ sys.path.append(os.path.dirname(sys.path[0]))
 from utils import find_files_by_extensions
 from tqdm import tqdm
 import glob
+from datasets import Dataset, DatasetDict
 
 _CURR_DIR = os.path.realpath(os.path.dirname(os.path.realpath(__file__)))
 MAESTOR_V1_DIR = os.path.join(_CURR_DIR, 'maestro-v1.0.0')
@@ -171,6 +172,20 @@ if __name__ == '__main__':
                     
         print(f"成功！'{source_folder}' 中的所有 .txt 檔案已合併至 '{output_file}'。")
 
+    def load_sequences_from_npy_folder(folder_path):
+        """從一個資料夾中載入所有 .npy 檔案，並回傳一個包含所有序列的列表。"""
+        npy_files = glob.glob(os.path.join(folder_path, '*.npy'))
+        all_sequences = []
+        print(f"在 '{folder_path}' 中找到 {len(npy_files)} 個 .npy 檔案...")
+        for file_path in tqdm(npy_files, desc=f"載入 {os.path.basename(folder_path)}"):
+            try:
+                # 載入 .npy 檔案，並將其轉換為 list
+                sequence = np.load(file_path).tolist()
+                all_sequences.append(sequence)
+            except Exception as e:
+                print(f"讀取檔案 {file_path} 時發生錯誤: {e}")
+        return all_sequences
+
     num_cpus = mpl.cpu_count()
     if not os.path.exists(args.output_folder):
         os.makedirs(args.output_folder)
@@ -259,6 +274,47 @@ if __name__ == '__main__':
             print("-" * 50)
 
         print("所有數據集合併完成！")
+
+    elif args.mode == 'npy_to_allnpy':
+        # --- 請設定您的來源和目標路徑 ---
+        # 包含 train, valid, test 三個子資料夾的 .npy 數據根目錄
+        # 這應該是您原始 music_encoder.py 產生 .npy 的地方
+        BASE_NPY_DIR = "./maestro_magenta_s5_t3" 
+        
+        # 您想要將最終處理好的 Arrow 格式數據集儲存到哪裡
+        FINAL_DATASET_SAVE_PATH = "./arrow_dataset"
+        # ------------------------------------
+
+        print("開始從 .npy 檔案建立 Hugging Face Dataset...")
+
+        # 分別為 train, valid, test 建立 Dataset 物件
+        train_sequences = load_sequences_from_npy_folder(os.path.join(BASE_NPY_DIR, 'train'))
+        valid_sequences = load_sequences_from_npy_folder(os.path.join(BASE_NPY_DIR, 'valid'))
+        test_sequences = load_sequences_from_npy_folder(os.path.join(BASE_NPY_DIR, 'test'))
+
+        # 將載入的序列轉換成 Dataset 要求的字典格式
+        train_dataset = Dataset.from_dict({"input_ids": train_sequences})
+        valid_dataset = Dataset.from_dict({"input_ids": valid_sequences})
+        test_dataset = Dataset.from_dict({"input_ids": test_sequences})
+
+        # 將三個 Dataset 物件打包成一個 DatasetDict
+        raw_datasets = DatasetDict({
+            'train': train_dataset,
+            'validation': valid_dataset,
+            'test': test_dataset
+        })
+
+        print("\n數據集結構預覽:")
+        print(raw_datasets)
+        
+        # 將這個數據集字典以高效的 Arrow 格式儲存到硬碟
+        print(f"\n正在將數據集儲存至 '{FINAL_DATASET_SAVE_PATH}'...")
+        raw_datasets.save_to_disk(FINAL_DATASET_SAVE_PATH)
+
+        print("-" * 50)
+        print("🎉 成功！您的 .npy 數據已轉換為高效的 Arrow 數據集。")
+        print(f"現在您可以在訓練指令中使用 '{FINAL_DATASET_SAVE_PATH}' 這個路徑了。")
+        print("-" * 50)
 
     else:
         raise NotImplementedError
