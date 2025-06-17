@@ -313,6 +313,7 @@ def main():
     # In distributed training, the load_dataset function guarantee that only one local process can concurrently
     # download the dataset.
     if data_args.dataset_name is not None and os.path.isdir(data_args.dataset_name): # 已經手動分類好train, test, valid的arrow表示的dataset
+        print("0000000000000000000000000000")
         logger.info(f"Loading dataset from disk at {data_args.dataset_name}")
         raw_datasets = load_from_disk(data_args.dataset_name)
         # Downloading and loading a dataset from the hub.
