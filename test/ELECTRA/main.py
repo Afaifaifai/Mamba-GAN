@@ -316,6 +316,7 @@ def main():
         print("0000000000000000000000000000")
         logger.info(f"Loading dataset from disk at {data_args.dataset_name}")
         raw_datasets = load_from_disk(data_args.dataset_name)
+        print(raw_datasets)
         # Downloading and loading a dataset from the hub.
         # raw_datasets = load_dataset(
         #     data_args.dataset_name,
